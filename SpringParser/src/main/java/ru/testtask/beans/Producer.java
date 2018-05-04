@@ -10,10 +10,14 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.Charset;
+import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.NoSuchElementException;
 import java.util.concurrent.BlockingQueue;
 import java.util.stream.Stream;
 
@@ -22,10 +26,12 @@ import java.util.stream.Stream;
 public class Producer implements Runnable {
 
 
-    int i = 0;
-    Handler handler;
+    private int i = 1;
+    private Handler handler;
     private BlockingQueue<LinkedList> queue;
-
+    private Stream stream;
+    private Iterator<String> iterator;
+    private String[] charsets = {"UTF-8","windows-1251"};
 
     Producer() {
     }
@@ -36,103 +42,97 @@ public class Producer implements Runnable {
 
     }
 
-
     @Override
     public void run() {
 
         try {
-            if (handler.getFileExtension().equals("xlsx")) {
-                xlsxCheck(handler.getFile());
+            if (getFileExtension().equals("xlsx")) {
+                xlsxRead(getFile());
 
             } else {
-                Stream stream = Files.lines(getFilePath());
-                Iterator iterator = stream.iterator();
-                while (true) {
 
+                for (int j = 0; j < charsets.length; j++) {
+                    try {
+                        stream = Files.lines(getFile().toPath(), Charset.forName(charsets[j]));
+                        iterator = stream.iterator();
 
-                    i++;
+                        while (!isEnd()) {
+                            String s = iterator.next();
 
-                    if (handler.isFileEnd()) {
-                        setFileEnd(true);
-                        System.out.println("produce stop");
-                        Thread.sleep(100);
+                            if (s.isEmpty()) throw new NoSuchElementException();
+                            process(s);
+                            setFileEnd(!iterator.hasNext());
+                        }
+                        stream.close();
                         break;
+                    } catch (UncheckedIOException uioe) {
+                        System.out.println("Кодировка отлична от " +charsets[j]);
+                        System.out.println();
                     }
-                    Process(iterator.next().toString(), i);
-
-
                 }
+
             }
-            System.out.println("Чтение файла завершено");
+        } catch (NoSuchElementException e) {
+            System.err.println("Файл пуст " + e);
+            stream.close();
+        } catch (MalformedInputException mie) {
+            System.out.println("Error: " + mie);
+        } catch (IOException e) {
+            System.err.println("Error 1: " + e);
         } catch (Exception e) {
-            System.out.println("Error: " + e);
+            System.err.println("Ошибка 2:" + e + " Пожалуйста, обратись к разработчику");
         } finally {
-            stopConsumeProcess();
-            System.out.println("Закрываем Producer 1");
-
+            setFileEnd(true);
         }
-        System.out.println("Закрываем Producer 2");
     }
 
-    private void stopConsumeProcess() {
-
-        handler.setFileEnd(true);
-
-        Thread.currentThread().interrupt();
+    private File getFile() {
+        return handler.getFile();
     }
 
-    String getFileExtension() {
+    private boolean isEnd() {
+
+        return handler.isFileEnd();
+
+    }
+
+    private String getFileExtension() {
         return handler.getFileExtension();
     }
 
-    String getFileName() {
-        return handler.getFileName();
-    }
-
-    void setFileEnd(Boolean b) {
+    private void setFileEnd(Boolean b) {
         handler.setFileEnd(b);
     }
 
-    Path getFilePath() {
-        return handler.getFilePath();
-    }
+    private void process(String list) throws Exception {
 
-    private void Process(String list, int line) throws Exception {
-  //      LinkedList linkedList = new LinkedList();
-        System.out.println("Положили строчку в очередь " + handler.setHandle(list, line) + "    ---i---   " + i);
-     //   linkedList.addAll();
-  //      System.out.println(linkedList);
-        queue.put(handler.setHandle(list, line));
-        System.out.println("Producer   Queue Capacity is " + queue.remainingCapacity());
-        System.out.println("Это поток----------------------" + Thread.currentThread().getName());
+        queue.put(handler.setQueue(list, i));
 
         Thread.sleep(100);
+        i++;
     }
 
-    private void xlsxCheck(File file) {
+    private void xlsxRead(File file) {
 
         try {
 
             Workbook workbook = new XSSFWorkbook(file);
             Sheet sheet = workbook.getSheetAt(0);
-
+            if (sheet.getPhysicalNumberOfRows() == 0) throw new Error();
             for (Row row : sheet) {
-                i++;
+
                 for (Cell cell : row) {
-                    Process(cell.getStringCellValue(), i);
-
+                    process(cell.getStringCellValue());
                 }
-
             }
-
             workbook.close();
+        } catch (Error e) {
+            System.out.println("Файл " + file.getName() + " пуст!");
         } catch (Exception e) {
-            System.err.println("Ошибка в чтение xlsx");
+            System.err.println("Ошибка " + e + " при чтение " + file);
         }
         handler.setFileEnd(true);
-        Thread.currentThread().interrupt();
     }
-
 }
 
 

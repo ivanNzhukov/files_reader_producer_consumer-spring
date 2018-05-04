@@ -2,9 +2,9 @@ package ru.testtask.beans;
 
 import ru.testtask.Interface.Reader;
 import ru.testtask.Interface.Writer;
+
 import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -29,66 +29,61 @@ public class Handler {
     }
 
 
-    public Handler() {   }
+    public Handler() {
+    }
 
-    public File getFile() {
+    File getFile() {
         return file;
     }
 
-    public void setFile(String file, String extension) {
-        this.file = new File(file);
+    public void setFile(File file, String extension) {
+        this.file = file;
         setFilePath(file);
-        setFileName(getFilePath());
+        setFileName(file);
         setFileExtension(extension);
     }
 
-    public boolean isFileEnd() {
+    boolean isFileEnd() {
         return isFileEnd;
     }
 
-    public void setFileEnd(boolean fileEnd) {
+    void setFileEnd(boolean fileEnd) {
         isFileEnd = fileEnd;
     }
 
-    public Path getFilePath() {
-        return filePath;
+    private void setFilePath(File file) {
+        filePath = file.toPath();
     }
 
-    public void setFilePath(String file) {
-        filePath = Paths.get(file);
-
-    }
-
-    public String getFileName() {
+    private String getFileName() {
         return filename;
     }
 
-    public void setFileName(Path filePath) {
-        filename = filePath.getFileName().toString();
+    private void setFileName(File file) {
+
+        filename = file.getName();
     }
 
-    public void getHandle(LinkedList list) throws InterruptedException {
+    void getQueue(LinkedList list) {
 
         writer.Printer(list);
 
     }
 
-    public LinkedList setHandle(String string, int line) throws Exception {
+    LinkedList setQueue(String string, int line) {
 
         reader.objectReader(string, getFileName(), line);
         return reader.getList();
 
     }
 
-    public String getFileExtension() {
+    String getFileExtension() {
         return fileExtension;
     }
 
-    public void setFileExtension(String fileExtension) {
+    private void setFileExtension(String fileExtension) {
         this.fileExtension = fileExtension;
     }
-
-
 
 
 }

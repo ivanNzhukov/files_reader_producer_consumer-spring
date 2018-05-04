@@ -18,7 +18,8 @@ public class JsonReader implements Reader {
 
 
     final private List<String> ARRAY = Arrays.asList("orderId", "amount", "comment");
-    LinkedList linkedList = new LinkedList();
+
+    private LinkedList linkedList;
 
     @Override
     public LinkedList getList() {
@@ -33,7 +34,8 @@ public class JsonReader implements Reader {
 
     @Override
     public void objectReader(String string, String filename, int lineNumber) {
-        linkedList.clear();
+
+        linkedList = new LinkedList();
         String result = "";
         JSONParser jsonParser = new JSONParser();
         JSONObject object = null;
@@ -45,14 +47,13 @@ public class JsonReader implements Reader {
 
                 try {
                     linkedList.add(object.get(ARRAY.get(i)).toString());
-
                 } catch (Exception e) {
                     linkedList.add(null);
-                    result += "Колонка \'" + ARRAY.get(i) + "\' названа не правильно или отсутствует; ";
+                    result += "Колонка '" + ARRAY.get(i) + "' названа не правильно или отсутствует; ";
                 }
             }
         } catch (ParseException e) {
-            result = "Ошибка в строке, возможно вы используете массив, а не строку ";
+            result = "Не корректный формат строки. Возможно, вы используете массив, а не строку ";
         }
         linkedList.add(filename);
         linkedList.add(lineNumber);

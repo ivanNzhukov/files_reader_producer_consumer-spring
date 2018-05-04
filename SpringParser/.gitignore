@@ -1,3 +1,5 @@
-/.idea/
-/target/
-/out/
+/.idea
+/target
+/out
+*.log
+*.iml

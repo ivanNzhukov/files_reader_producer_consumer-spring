@@ -1,6 +1,5 @@
 package ru.testtask.main;
 
-import com.sun.org.glassfish.gmbal.Description;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -10,9 +9,8 @@ import ru.testtask.Interface.Writer;
 import ru.testtask.beans.Consumer;
 import ru.testtask.beans.Handler;
 import ru.testtask.beans.Producer;
-import ru.testtask.readers.CsvReader;
+import ru.testtask.readers.OtherReader;
 import ru.testtask.readers.JsonReader;
-import ru.testtask.readers.XlsxReader;
 import ru.testtask.writer.JsonWriter;
 
 import java.util.concurrent.BlockingQueue;
@@ -42,24 +40,16 @@ public class AppConfig {
     }
 
     @Bean(name = "jsonReader")
-    @Description("Обработчик json формата")
     Reader jsonReader() {
         return new JsonReader();
     }
 
-    @Bean(name = "csvReader")
-    @Description("Обработчик csv формата")
-    Reader csvReader() {
-        return new CsvReader();
+    @Bean(name = "otherReader")
+    Reader otherReader() {
+        return new OtherReader();
     }
 
-    @Bean(name = "xlsxReader")
-    @Description("Обработчик xlsx формата")
-    Reader xlsxReader() {
-        return new XlsxReader();
-    }
-
-    @Bean
+    @Bean(name = "writer")
     Writer writer() {
         return new JsonWriter();
     }
