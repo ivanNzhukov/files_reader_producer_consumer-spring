@@ -6,20 +6,18 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.charset.Charset;
 import java.nio.charset.MalformedInputException;
-import java.nio.file.Files;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.concurrent.BlockingQueue;
-import java.util.stream.Stream;
 
 @Component
 @Scope("prototype")
@@ -29,12 +27,11 @@ public class Producer implements Runnable {
     private int i = 1;
     private Handler handler;
     private BlockingQueue<LinkedList> queue;
-    private Stream stream;
-    private Iterator<String> iterator;
-    private String[] charsets = {"UTF-8","windows-1251"};
+    private BufferedReader reader;
 
     Producer() {
     }
+
 
     public Producer(Handler handler, BlockingQueue queue) {
         this.queue = queue;
@@ -46,35 +43,28 @@ public class Producer implements Runnable {
     public void run() {
 
         try {
+            reader = new BufferedReader(new FileReader(getFile()));
             if (getFileExtension().equals("xlsx")) {
                 xlsxRead(getFile());
 
             } else {
 
-                for (int j = 0; j < charsets.length; j++) {
-                    try {
-                        stream = Files.lines(getFile().toPath(), Charset.forName(charsets[j]));
-                        iterator = stream.iterator();
 
-                        while (!isEnd()) {
-                            String s = iterator.next();
+                reader = new BufferedReader(new FileReader(getFile()));
 
-                            if (s.isEmpty()) throw new NoSuchElementException();
-                            process(s);
-                            setFileEnd(!iterator.hasNext());
-                        }
-                        stream.close();
-                        break;
-                    } catch (UncheckedIOException uioe) {
-                        System.out.println("Кодировка отлична от " +charsets[j]);
-                        System.out.println();
-                    }
+
+                while (true) {
+                    String line = reader.readLine();
+
+                    if (line.isEmpty()) throw new NullPointerException();
+                    else process(line);
                 }
-
             }
+            reader.close();
+        } catch (NullPointerException npe) {
+
         } catch (NoSuchElementException e) {
             System.err.println("Файл пуст " + e);
-            stream.close();
         } catch (MalformedInputException mie) {
             System.out.println("Error: " + mie);
         } catch (IOException e) {
@@ -82,6 +72,7 @@ public class Producer implements Runnable {
         } catch (Exception e) {
             System.err.println("Ошибка 2:" + e + " Пожалуйста, обратись к разработчику");
         } finally {
+
             setFileEnd(true);
         }
     }
@@ -118,6 +109,7 @@ public class Producer implements Runnable {
 
             Workbook workbook = new XSSFWorkbook(file);
             Sheet sheet = workbook.getSheetAt(0);
+
             if (sheet.getPhysicalNumberOfRows() == 0) throw new Error();
             for (Row row : sheet) {
 

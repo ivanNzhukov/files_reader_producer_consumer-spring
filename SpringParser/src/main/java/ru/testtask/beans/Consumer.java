@@ -1,6 +1,7 @@
 package ru.testtask.beans;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +18,7 @@ public class Consumer implements Runnable {
 
     Consumer() {
     }
-
+@Autowired
     public Consumer(Handler handler, BlockingQueue queue) {
         this.queue = queue;
         this.handler = handler;

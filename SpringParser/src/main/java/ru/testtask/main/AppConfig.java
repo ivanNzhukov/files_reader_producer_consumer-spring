@@ -1,9 +1,7 @@
 package ru.testtask.main;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.*;
 import ru.testtask.Interface.Reader;
 import ru.testtask.Interface.Writer;
 import ru.testtask.beans.Consumer;
@@ -28,6 +26,7 @@ public class AppConfig {
     }
 
     @Bean(name = "Producer")
+    @Lazy
     @Scope("prototype")
     public Producer producer(Handler handler, BlockingQueue queue) {
         return new Producer(handler,queue);
