@@ -37,11 +37,17 @@ public class JsonReader implements Reader {
 
         linkedList = new LinkedList();
         String result = "";
+        String s = "";
         JSONParser jsonParser = new JSONParser();
         JSONObject object = null;
 
         try {
-            object = (JSONObject) jsonParser.parse(string);
+            if (string.startsWith("[")) {
+                s = string.substring(1);
+            } else if (string.endsWith("]")) {
+                s = string.substring(0, string.length() - 1);
+            } else s = string;
+            object = (JSONObject) jsonParser.parse(s);
 
             for (int i = 0; i < ARRAY.size(); i++) {
 
@@ -52,15 +58,16 @@ public class JsonReader implements Reader {
                     result += "Колонка '" + ARRAY.get(i) + "' названа не правильно или отсутствует; ";
                 }
             }
-        } catch (ParseException e) {
-            result = "Не корректный формат строки. Возможно, вы используете массив, а не строку ";
+        } catch (ParseException pe) {
+
+            result = "Не корректный формат строки по причине: " + pe;
         }
         linkedList.add(filename);
         linkedList.add(lineNumber);
         linkedList.add(result.equals("") ? "OK" : result);
-
-
     }
+
+
 }
 
 
